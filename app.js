@@ -1,7 +1,12 @@
-const express = require("express");
-
+const express = require('express');
 const app = express();
-app.use(express.json());
-app.use(router);
 
-app.listen(8080, () => console.log("Server listening on port 8080"));
+const userRouter = require('./routes/transactionRoute');
+
+app.use(express.json());
+
+app.use('/api/v1/user', userRouter);
+
+module.exports = app
+
+
