@@ -29,7 +29,7 @@ exports.createUser = async (req, res, next) => {
   try {
     const { email, first_name, last_name } = req.body;
 
-    if (password != password_confirm) {
+    if (password !== password_confirm) {
       console.log('password and confirm password did not match');
     }
 
@@ -52,15 +52,16 @@ exports.login = async (req, res, next) => {
   //Check if email and password exist
   if (!email || !password) {
     // return next(new AppError('Please provide email and password', 400));
-    console
+    console.log('Please provide email and password');
   }
   //Check if user exist and password is correct
-  const user = await User.findOne({ email }).select('+password');
-  //   console.log(user);
+  const user = (await db('users').where({ email }).select('password'))[0];
+  console.log(user);
+  console.log(password, user.password);
 
-  if (!user || !(password != user.password)) {
-    // return next(new AppError('Incorrect email or password!', 401));
-    console.log('Incorrect email or password!')
+  if (!user || !(password === user.password)) {
+  // return next(new AppError('Incorrect email or password!', 401));
+  console.log('Incorrect email or password!')
   }
   //if everything is ok, send token to client
   createSendToken(user, 200, res);
@@ -86,7 +87,7 @@ exports.protect = async (req, res, next) => {
   //Token verification
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
   //Check if user still exists
-  const currentUser = await User.where(id,decoded.id);
+  const currentUser = await db('users').where(id, decoded.id);
   if (!currentUser) {
     return next(
       // new AppError('The user belonging to this  token no longer exist', 401)
