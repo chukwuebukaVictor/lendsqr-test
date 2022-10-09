@@ -4,8 +4,9 @@ const router = express.Router();
 
 router.route('/').post(userController.createUser);
 
-router.route('/login').post(userController.login)
+router.route('/login').post(userController.login);
 
-router.route('/deposit').post(userController.deposit)
+router.route('/deposit').post(userController.deposit);
+router.route('/withdraw').post(userController.protect, userController.withdraw);
 
 module.exports = router;
