@@ -8,5 +8,6 @@ router.route('/login').post(userController.login);
 
 router.route('/deposit').post(userController.deposit);
 router.route('/withdraw').post(userController.protect, userController.withdraw);
+router.route('/transfer').post(userController.protect, userController.transfer);
 
 module.exports = router;

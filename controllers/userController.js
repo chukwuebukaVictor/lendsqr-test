@@ -28,20 +28,18 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 exports.createUser = catchAsync(async (req, res, next) => {
-  const { email, first_name, last_name, password, password_confirm } = req.body;
-
+  let { email, first_name, last_name, password, password_confirm } = req.body;
   if (password !== password_confirm) {
     return next(
       new AppError('password and confirm password did not match', 401)
     );
   }
-
+// password_confirm = undefined;
   const newUser = await db('users').insert({
     email,
     first_name,
     last_name,
     password,
-    password_confirm,
   });
   createSendToken(newUser[0], 201, res);
   // } catch (err) {
@@ -80,10 +78,12 @@ exports.deposit = catchAsync(async (req, res, next) => {
   await db('users')
     .where({ email: req.body.email })
     .update('wallet', newWallet);
-  res.status(200).json({
-    status: 'success',
-    user,
-  });
+  // res.status(200).json({
+  //   status: 'success',
+  //   user,
+  // });
+  createSendToken(user[0].id, 200, res);
+
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -137,11 +137,7 @@ exports.withdraw = catchAsync(async (req, res, next) => {
     return next(new AppError('Insufficient fund'), 404);
   }
   const wallet = (user[0].wallet -= amount);
-  // res.status(200).json({
-  //   status: 'success',
-  //   message: `${amount} sucessfully witdrawn`,
-  //   walletBalance: `${wallet}`,
-  // });\
+  
 
   await db('users')
     .where({ email: req.user[0].email })
@@ -151,19 +147,39 @@ exports.withdraw = catchAsync(async (req, res, next) => {
     message: `${amount} sucessfully witdrawn`,
     walletBalance: `${wallet}`,
   });
+  // createSendToken(user.id, 200, res);
+
 });
 
-// exports.transfer = catchAsync(async (req, res, next) => {
-//   const {email, amount} = req.body;
-//   const user = req.user;
-//   if(!user){
-//     return next(new AppError('Your are not logged in',404))
-//   }
-//   if(!email || !amount){
-//     return next(new AppError('Enter beneficiary email and amount'))
-//   }
-//   if(amount > user[0].wallet){
-//     return next(new AppError('insufficient fund',401))
-//   }
-//   console.log(user)
-// });
+exports.transfer = catchAsync(async (req, res, next) => {
+  const { email, amount } = req.body;
+  const user = req.user;
+  if (!user) {
+    return next(new AppError('Your are not logged in', 404));
+  }
+  if (!email || !amount) {
+    return next(new AppError('Enter beneficiary email and amount'));
+  }
+  if (typeof amount === 'string' || amount > user[0].wallet) {
+    return next(new AppError('insufficient fund', 401));
+  }
+
+  const beneficiary = (await db('users').where({ email: req.body.email }))[0];
+  if (!beneficiary) {
+    return next(new AppError('Beneficiary does not exist', 404));
+  }
+  const beneficiaryWallet = beneficiary.wallet
+  const userWallet = (user[0].wallet -= amount);
+
+  await db('users')
+    .where({ email: user[0].email })
+    .update('wallet', userWallet);
+
+  await db('users').where({ email }).update('wallet', beneficiaryWallet);
+
+  res.status(200).json({
+    status: 'success',
+    message: `${amount} sucessfully transfered to ${beneficiary.first_name} ${beneficiary.last_name}`,
+    walletBalance: `${userWallet}`,
+  });
+});

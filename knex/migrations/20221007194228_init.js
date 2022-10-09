@@ -10,7 +10,6 @@ exports.up = function (knex) {
     table.string('last_name').notNullable();
     table.integer('wallet').defaultTo(0);
     table.string('password').notNullable()
-    table.string('password_confirm').notNullable()
   });
 };
 
