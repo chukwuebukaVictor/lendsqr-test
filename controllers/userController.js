@@ -1,9 +1,11 @@
 const { promisify } = require('util');
+const bcrypt = require('bcryptjs');
 const db = require('../knex/knex');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const hashedPass = require('../utils/hashedPassword');
 
 dotenv.config({ path: './config.env' });
 
@@ -34,12 +36,13 @@ exports.createUser = catchAsync(async (req, res, next) => {
       new AppError('password and confirm password did not match', 401)
     );
   }
-// password_confirm = undefined;
+  const hashedPassword = await hashedPass(password);
+  // password_confirm = undefined;
   const newUser = await db('users').insert({
     email,
     first_name,
     last_name,
-    password,
+    password: hashedPassword,
   });
   createSendToken(newUser[0], 201, res);
   // } catch (err) {
@@ -55,7 +58,9 @@ exports.login = catchAsync(async (req, res, next) => {
   }
   //Check if user exist and password is correct
   const user = (await db('users').where('email', email))[0];
-  if (!user || !(password === user.password)) {
+  // const hashedPassword = await hashedPass(password)
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     // throw new Error('Wrong user name or password')
     return next(new AppError('Wrong user name or password', 404));
   }
@@ -83,7 +88,6 @@ exports.deposit = catchAsync(async (req, res, next) => {
   //   user,
   // });
   createSendToken(user[0].id, 200, res);
-
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -137,7 +141,6 @@ exports.withdraw = catchAsync(async (req, res, next) => {
     return next(new AppError('Insufficient fund'), 404);
   }
   const wallet = (user[0].wallet -= amount);
-  
 
   await db('users')
     .where({ email: req.user[0].email })
@@ -148,7 +151,6 @@ exports.withdraw = catchAsync(async (req, res, next) => {
     walletBalance: `${wallet}`,
   });
   // createSendToken(user.id, 200, res);
-
 });
 
 exports.transfer = catchAsync(async (req, res, next) => {
@@ -168,7 +170,7 @@ exports.transfer = catchAsync(async (req, res, next) => {
   if (!beneficiary) {
     return next(new AppError('Beneficiary does not exist', 404));
   }
-  const beneficiaryWallet = beneficiary.wallet
+  const beneficiaryWallet = beneficiary.wallet;
   const userWallet = (user[0].wallet -= amount);
 
   await db('users')
