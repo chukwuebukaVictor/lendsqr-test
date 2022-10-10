@@ -1,11 +1,11 @@
-const { promisify } = require('util');
 const bcrypt = require('bcryptjs');
 const db = require('../knex/knex');
 const { createSendToken } = require('../utils/authToken');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const hashedPass = require('../utils/hashedPassword');
-const { saveUser, logUser } = require('../service/userService');
+const { saveUser, logUser, userDeposit, userWithdraw } = require('../service/userService');
+// const {protect} = require('../utils/authUser')
 
 exports.createUser = catchAsync(async (req, res, next) => {
   let { email, first_name, last_name, password, password_confirm } = req.body;
@@ -33,55 +33,30 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.deposit = catchAsync(async (req, res, next) => {
-  const user = await db('users').where({ email: req.body.email });
-  if (!user) {
-    return next(new AppError('User does not exist', 401));
-  }
-
+  // const user = await db('users').where({ email: req.body.email });
+  // if (!user) {
+  //   return next(new AppError('User does not exist', 401));
+  // }
+  
   const { amount } = req.body;
   if (typeof amount === 'string' || amount <= 0) {
     return next(new AppError('invalid amount', 400));
   }
-  const newWallet = (user[0].wallet += amount);
-  await db('users')
-    .where({ email: req.body.email })
-    .update('wallet', newWallet);
+  await userDeposit(req,amount);
+  // const newWallet = (user[0].wallet += amount);
+  // await db('users')
+  //   .where({ email: req.body.email })
+  //   .update('wallet', newWallet);
+
 
   // createSendToken(user[0].id, 200, res);
   res.status(200).json({
     status: 'success',
-    message:`${amount} successfully deposited}`
+    message:`${amount} successfully deposited`
   })
 });
 
-exports.protect = catchAsync(async (req, res, next) => {
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
 
-  if (!token) {
-    return Next(
-      new AppError('You are not logged in! Please log in to get access', 401)
-    );
-  }
-
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  const currentUser = await db('users').where('id', decoded.id);
-
-  if (!currentUser) {
-    return next(
-      new AppError('The user belonging to this  token no longer exist', 401)
-    );
-  }
-
-  req.user = currentUser;
-
-  next();
-});
 
 exports.withdraw = catchAsync(async (req, res, next) => {
   const { amount } = req.body;
@@ -95,12 +70,13 @@ exports.withdraw = catchAsync(async (req, res, next) => {
   }
   const wallet = (user[0].wallet -= amount);
 
-  await db('users')
-    .where({ email: req.user[0].email })
-    .update('wallet', wallet);
+  // await db('users')
+  //   .where({ email: req.user[0].email })
+  //   .update('wallet', wallet);
+  await userWithdraw(req,user,amount,wallet)
   res.status(200).json({
     status: 'success',
-    message: `${amount} sucessfully witdrawn`,
+    message: `${amount} sucessfully withdrawn`,
     walletBalance: `${wallet}`,
   });
 });

@@ -13,13 +13,25 @@ exports.logUser = async (email) => {
   return (await db('users').where('email', email))[0];
 };
 
-exports.userDeposit = async (user) => await db('users')
-//   const user = await db('users').where({ email: req.body.email });
-//   if (!user) {
-//     return next(new AppError('User does not exist', 401));
-//   }
+exports.userDeposit = async (req,amount) => {
+    const user = await db('users').where({ email: req.body.email });
+    // const {amount}   = req.body;
 
-//   return await db('users')
-//     .where({ email: req.body.email })
-//     .update('wallet', wallet);
+  if (!user) {
+    return next(new AppError('User does not exist', 401));
+  }
+
+  const newWallet = (user[0].wallet += amount);
+  return await db('users')
+    .where({ email: req.body.email })
+    .update('wallet', newWallet);
+
+}
+
+exports.userWithdraw = async(req,user,amount,wallet) => {
+
+    await db('users')
+    .where({ email: req.user[0].email })
+    .update('wallet', wallet);
+}
 
