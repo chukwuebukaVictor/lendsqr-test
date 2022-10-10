@@ -6,7 +6,7 @@ const AppError = require('../utils/appError');
 const hashedPass = require('../utils/hashedPassword');
 const {
   saveUser,
-  logUser,
+  fetchUser,
   userDeposit,
   userWithdraw,
   userTransfer,
@@ -37,7 +37,7 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!email || !password) {
     return next(new AppError('Please provide email or password', 400));
   }
-  const user = await logUser(email);
+  const user = await fetchUser(email);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return next(new AppError('Wrong user name or password', 401));

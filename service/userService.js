@@ -16,7 +16,7 @@ exports.saveUser = async (
   });
 };
 
-exports.logUser = async (email) => {
+exports.fetchUser = async (email) => {
   return (await db('users').where('email', email))[0];
 };
 
@@ -48,7 +48,7 @@ exports.userTransfer = async (req, user, account_number, userWallet,amount) => {
   if (!beneficiary) {
     return next(new AppError('Beneficiary does not exist', 404));
   }
-  
+
   const newBeneficiaryWallet = beneficiary.wallet +=amount ;
  
   await db('users')
