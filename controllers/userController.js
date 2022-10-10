@@ -4,10 +4,17 @@ const { createSendToken } = require('../utils/authToken');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const hashedPass = require('../utils/hashedPassword');
-const { saveUser, logUser, userDeposit, userWithdraw } = require('../service/userService');
-// const {protect} = require('../utils/authUser')
+const {
+  saveUser,
+  logUser,
+  userDeposit,
+  userWithdraw,
+  userTransfer,
+} = require('../service/userService');
 
 exports.createUser = catchAsync(async (req, res, next) => {
+  const account_number = Number(Date.now().toString().slice(3));
+  console.log(account_number);
   let { email, first_name, last_name, password, password_confirm } = req.body;
   if (password !== password_confirm) {
     return next(
@@ -15,7 +22,13 @@ exports.createUser = catchAsync(async (req, res, next) => {
     );
   }
   const hashedPassword = await hashedPass(password);
-  const newUser = await saveUser(email, first_name, last_name, hashedPassword);
+  const newUser = await saveUser(
+    email,
+    first_name,
+    last_name,
+    hashedPassword,
+    account_number
+  );
   createSendToken(newUser[0], 201, res);
 });
 
@@ -33,30 +46,17 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.deposit = catchAsync(async (req, res, next) => {
-  // const user = await db('users').where({ email: req.body.email });
-  // if (!user) {
-  //   return next(new AppError('User does not exist', 401));
-  // }
-  
   const { amount } = req.body;
   if (typeof amount === 'string' || amount <= 0) {
     return next(new AppError('invalid amount', 400));
   }
-  await userDeposit(req,amount);
-  // const newWallet = (user[0].wallet += amount);
-  // await db('users')
-  //   .where({ email: req.body.email })
-  //   .update('wallet', newWallet);
+  await userDeposit(req, amount);
 
-
-  // createSendToken(user[0].id, 200, res);
   res.status(200).json({
     status: 'success',
-    message:`${amount} successfully deposited`
-  })
+    message: `${amount} successfully deposited`,
+  });
 });
-
-
 
 exports.withdraw = catchAsync(async (req, res, next) => {
   const { amount } = req.body;
@@ -70,10 +70,7 @@ exports.withdraw = catchAsync(async (req, res, next) => {
   }
   const wallet = (user[0].wallet -= amount);
 
-  // await db('users')
-  //   .where({ email: req.user[0].email })
-  //   .update('wallet', wallet);
-  await userWithdraw(req,user,amount,wallet)
+  await userWithdraw(req, user, amount, wallet);
   res.status(200).json({
     status: 'success',
     message: `${amount} sucessfully withdrawn`,
@@ -82,34 +79,30 @@ exports.withdraw = catchAsync(async (req, res, next) => {
 });
 
 exports.transfer = catchAsync(async (req, res, next) => {
-  const { email, amount } = req.body;
+  const { account_number, amount } = req.body;
   const user = req.user;
   if (!user) {
     return next(new AppError('Your are not logged in', 404));
   }
-  if (!email || !amount) {
+  if (!account_number || !amount) {
     return next(new AppError('Enter beneficiary email and amount'));
   }
   if (typeof amount === 'string' || amount > user[0].wallet) {
     return next(new AppError('insufficient fund', 401));
   }
-
-  const beneficiary = (await db('users').where({ email: req.body.email }))[0];
-  if (!beneficiary) {
-    return next(new AppError('Beneficiary does not exist', 404));
-  }
-  const beneficiaryWallet = beneficiary.wallet;
   const userWallet = (user[0].wallet -= amount);
 
-  await db('users')
-    .where({ email: user[0].email })
-    .update('wallet', userWallet);
-
-  await db('users').where({ email }).update('wallet', beneficiaryWallet);
+  const beneficiaryDetails = await userTransfer(
+    req,
+    user,
+    account_number,
+    userWallet,
+    amount
+  );
 
   res.status(200).json({
     status: 'success',
-    message: `${amount} sucessfully transfered to ${beneficiary.first_name} ${beneficiary.last_name}`,
+    message: `${amount} sucessfully transfered ${beneficiaryDetails.first_name} ${beneficiaryDetails.last_name}`,
     walletBalance: `${userWallet}`,
   });
 });
