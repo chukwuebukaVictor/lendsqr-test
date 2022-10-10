@@ -35,12 +35,12 @@ exports.createUser = catchAsync(async (req, res, next) => {
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return next(new AppError('Please provide email or password', 404));
+    return next(new AppError('Please provide email or password', 400));
   }
   const user = await logUser(email);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return next(new AppError('Wrong user name or password', 404));
+    return next(new AppError('Wrong user name or password', 401));
   }
   createSendToken(user.id, 200, res);
 });

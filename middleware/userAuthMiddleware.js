@@ -3,6 +3,8 @@ const AppError = require('../utils/appError');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const db = require('../knex/knex');
+const { JWT_SECRET } = require('../config')
+
 
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -15,12 +17,12 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    return Next(
+    return next(
       new AppError('You are not logged in! Please log in to get access', 401)
     );
   }
 
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = await promisify(jwt.verify)(token, JWT_SECRET);
   const currentUser = await db('users').where('id', decoded.id);
 
   if (!currentUser) {

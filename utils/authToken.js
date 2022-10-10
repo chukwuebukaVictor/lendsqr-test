@@ -1,11 +1,9 @@
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-// const hashedPass = require('../utils/hashedPassword');
-dotenv.config({ path: './config.env' });
+const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config');
 
 const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+  return jwt.sign({ id }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
   });
 };
 
@@ -19,4 +17,3 @@ exports.createSendToken = (user, statusCode, res) => {
     },
   });
 };
-
