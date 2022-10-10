@@ -1,4 +1,4 @@
-// Update with your config settings.
+const { HOST, DB_PASSWORD } = require('./config');
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
@@ -7,9 +7,9 @@ module.exports = {
   development: {
     client: 'mysql2',
     connection: {
-      host: '127.0.0.1',
+      host: HOST,
       user: 'root',
-      password: 'Test@123',
+      password: DB_PASSWORD,
       database: 'Bank-App',
       charset: 'utf8',
     },
