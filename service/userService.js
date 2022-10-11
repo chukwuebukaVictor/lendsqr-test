@@ -1,62 +1,121 @@
 const db = require('../knex/knex');
+const { randomUUID } = require('crypto');
+const AppError = require('../utils/appError');
 
-exports.saveUser = async (
+saveUser = async (
   email,
   first_name,
   last_name,
   password,
-  account_number
 ) => {
   return await db('users').insert({
+    id: randomUUID(),
     email,
     first_name,
     last_name,
     password,
-    account_number,
-  });
+  }).returning("*");
 };
 
-exports.fetchUser = async (email) => {
-  return (await db('users').where('email', email))[0];
+saveAccount = async (
+  user_id,
+  number,
+) => {
+  return await db('accounts').insert({
+    number,
+    user_id,
+  }).returning("*");
 };
 
-exports.userDeposit = async (req, amount) => {
-  const user = await db('users').where({
-    account_number: req.body.account_number,
-  });
+createAccount = async (email, first_name, last_name, hashedPassword) => {
+  const account_number = Number(Date.now().toString().slice(3));
+  console.log(account_number);
 
-  if (!user) {
-    return next(new AppError('User does not exist', 401));
+  const [user] = await saveUser(
+    email,
+    first_name,
+    last_name,
+    hashedPassword,
+  );
+  const [account] = await saveAccount(user.id, account_number);
+
+  return {
+    id: user.id,
+    number: account.number,
   }
+}
 
-  const newWallet = (user[0].wallet += amount);
-  return await db('users')
-    .where({ account_number: req.body.account_number })
-    .update('wallet', newWallet);
+fetchUserByEmail = async (email) => {
+  const [user] = await db('users')
+    .join("accounts", "users.id", "accounts.user_id")
+    .where("users.email", email);
+
+  return user;
 };
 
-exports.userWithdraw = async (req, user, amount, wallet) => {
-  await db('users')
-    .where({ email: req.user[0].email })
-    .update('wallet', wallet);
+fetchUserById = async (id) => {
+  const [user] = await db('users')
+    .join("accounts", "users.id", "accounts.user_id")
+    .where("users.id", id);
+
+  return user;
 };
 
-exports.userTransfer = async (req, user, account_number, userWallet,amount) => {
-  const beneficiary = (
-    await db('users').where({ account_number: req.body.account_number })
-  )[0];
-  if (!beneficiary) {
-    return next(new AppError('Beneficiary does not exist', 404));
+fetchUserByAccountNumber = async (number) => {
+  const [user] = await db('users')
+    .join("accounts", "users.id", "accounts.user_id")
+    .where("accounts.number", number);
+
+  return user;
+};
+
+userDeposit = async (user_id, account_number, amount) => {
+  await db('accounts')
+    .where({ user_id: user_id })
+    .increment('balance', amount);
+
+  await logTransaction(account_number, amount);
+};
+
+userWithdraw = async (user_id, account_number, amount) => {
+  await db('accounts')
+    .where({ user_id: user_id })
+    .increment('balance', -amount);
+
+  await logTransaction(account_number, amount);
+};
+
+userTransfer = async (sender_id, recipient_id, amount) => {
+  const trx = await db.transaction();
+
+  try {
+    await trx('accounts')
+      .where({ user_id: recipient_id })
+      .increment('balance', amount);
+    await trx('accounts')
+      .where({ user_id: sender_id })
+      .increment('balance', -amount);
+    await trx.commit();
+  } catch (error) {
+    await trx.rollback(error);
+    throw new AppError('Transfer failed! Please try again later', 500);
   }
-
-  const newBeneficiaryWallet = beneficiary.wallet +=amount ;
- 
-  await db('users')
-    .where({ account_number: user[0].account_number })
-    .update('wallet', userWallet);
-
-  await db('users')
-    .where({ account_number })
-    .update('wallet', newBeneficiaryWallet);
-  return beneficiary;
 };
+
+logTransaction = async (recipient, amount, sender = 0) => {
+  return await db('transactions').insert({
+    id: randomUUID(),
+    sender,
+    recipient,
+    amount
+  }).returning("*");
+};
+
+module.exports = {
+  createAccount,
+  fetchUserByEmail,
+  fetchUserById,
+  userDeposit,
+  userWithdraw,
+  userTransfer,
+}
