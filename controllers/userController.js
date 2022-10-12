@@ -11,6 +11,7 @@ const {
   userWithdraw,
   userTransfer,
 } = require('../service/userService');
+// const { config } = require('dotenv');
 
 exports.createUser = catchAsync(async (req, res, next) => {
   let { email, first_name, last_name, password, password_confirm } = req.body;
@@ -22,8 +23,13 @@ exports.createUser = catchAsync(async (req, res, next) => {
   }
 
   const hashedPassword = await hashedPass(password);
-  const user = await createAccount(email, first_name, last_name, hashedPassword);
-
+  const user = await createAccount(
+    email,
+    first_name,
+    last_name,
+    hashedPassword
+  );
+  // console.log(user)
   createSendToken(user, 201, res);
 });
 
@@ -84,7 +90,9 @@ exports.transfer = catchAsync(async (req, res, next) => {
   const { id, number, balance } = req.user;
 
   if (!number || !amount) {
-    return next(new AppError('Enter beneficiary account number and amount', 400));
+    return next(
+      new AppError('Enter beneficiary account number and amount', 400)
+    );
   }
 
   if (typeof amount === 'string') {
@@ -101,11 +109,7 @@ exports.transfer = catchAsync(async (req, res, next) => {
     return next(new AppError('Recipient does not exist', 404));
   }
 
-  await userTransfer(
-    id,
-    recipient.id,
-    amount
-  );
+  await userTransfer(id, recipient.id, amount);
 
   res.status(200).json({
     status: 'success',

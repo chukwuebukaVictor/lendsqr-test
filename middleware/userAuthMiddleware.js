@@ -3,9 +3,8 @@ const AppError = require('../utils/appError');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const db = require('../knex/knex');
-const { JWT_SECRET } = require('../config')
-
-
+const { JWT_SECRET } = require('../config');
+const { fetchUserById } = require('../service/userService');
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
@@ -23,8 +22,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   const decoded = await promisify(jwt.verify)(token, JWT_SECRET);
-  const currentUser = await db('users').where('id', decoded.id);
-
+  const currentUser = await fetchUserById(decoded.id);
+  console.log({ decoded, currentUser });
   if (!currentUser) {
     return next(
       new AppError('The user belonging to this  token no longer exist', 401)

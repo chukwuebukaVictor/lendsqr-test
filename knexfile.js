@@ -18,7 +18,7 @@ module.exports = {
     },
   },
   test: {
-    client: 'mysql',
+    client: 'mysql2',
     connection: {
       host: HOST,
       user: 'root',

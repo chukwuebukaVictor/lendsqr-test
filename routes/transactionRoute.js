@@ -7,7 +7,7 @@ router.route('/').post(userController.createUser);
 
 router.route('/login').post(userController.login);
 
-router.route('/deposit').post(userController.deposit);
+router.route('/deposit').post(protect, userController.deposit);
 router.route('/withdraw').post(protect, userController.withdraw);
 router.route('/transfer').post(protect, userController.transfer);
 

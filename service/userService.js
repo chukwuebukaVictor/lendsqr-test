@@ -2,77 +2,66 @@ const db = require('../knex/knex');
 const { randomUUID } = require('crypto');
 const AppError = require('../utils/appError');
 
-saveUser = async (
-  email,
-  first_name,
-  last_name,
-  password,
-) => {
-  return await db('users').insert({
-    id: randomUUID(),
+const saveUser = async (email, first_name, last_name, password) => {
+  const id = randomUUID();
+  await db('users').insert({
+    id,
     email,
     first_name,
     last_name,
     password,
-  }).returning("*");
+  });
+  return id;
 };
 
-saveAccount = async (
-  user_id,
-  number,
-) => {
-  return await db('accounts').insert({
+const saveAccount = async (user_id, number) => {
+  await db('accounts').insert({
     number,
     user_id,
-  }).returning("*");
+  });
+  return number;
 };
 
 createAccount = async (email, first_name, last_name, hashedPassword) => {
   const account_number = Number(Date.now().toString().slice(3));
   console.log(account_number);
 
-  const [user] = await saveUser(
-    email,
-    first_name,
-    last_name,
-    hashedPassword,
-  );
-  const [account] = await saveAccount(user.id, account_number);
+  const id = await saveUser(email, first_name, last_name, hashedPassword);
+  const number = await saveAccount(id, account_number);
 
   return {
-    id: user.id,
-    number: account.number,
-  }
-}
+    id,
+    number,
+  };
+};
 
 fetchUserByEmail = async (email) => {
   const [user] = await db('users')
-    .join("accounts", "users.id", "accounts.user_id")
-    .where("users.email", email);
+    .join('accounts', 'users.id', 'accounts.user_id')
+    .where('users.email', email);
 
   return user;
 };
 
 fetchUserById = async (id) => {
   const [user] = await db('users')
-    .join("accounts", "users.id", "accounts.user_id")
-    .where("users.id", id);
+    .join('accounts', 'users.id', 'accounts.user_id')
+    .where('users.id', id);
 
   return user;
 };
 
 fetchUserByAccountNumber = async (number) => {
   const [user] = await db('users')
-    .join("accounts", "users.id", "accounts.user_id")
-    .where("accounts.number", number);
+    .join('accounts', 'users.id', 'accounts.user_id')
+    .where('accounts.number', number);
 
   return user;
 };
 
 userDeposit = async (user_id, account_number, amount) => {
-  await db('accounts')
-    .where({ user_id: user_id })
-    .increment('balance', amount);
+  console.log({ user_id, account_number, amount });
+  await db('accounts').where({ user_id: user_id }).increment('balance', amount);
 
   await logTransaction(account_number, amount);
 };
@@ -103,12 +92,14 @@ userTransfer = async (sender_id, recipient_id, amount) => {
 };
 
 logTransaction = async (recipient, amount, sender = 0) => {
-  return await db('transactions').insert({
-    id: randomUUID(),
-    sender,
-    recipient,
-    amount
-  }).returning("*");
+  return await db('transactions')
+    .insert({
+      id: randomUUID(),
+      sender,
+      recipient,
+      amount,
+    })
+    .returning('*');
 };
 
 module.exports = {
@@ -118,4 +109,4 @@ module.exports = {
   userDeposit,
   userWithdraw,
   userTransfer,
-}
+};
