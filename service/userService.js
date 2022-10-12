@@ -24,7 +24,6 @@ const saveAccount = async (user_id, number) => {
 
 createAccount = async (email, first_name, last_name, hashedPassword) => {
   const account_number = Number(Date.now().toString().slice(3));
-  console.log(account_number);
 
   const id = await saveUser(email, first_name, last_name, hashedPassword);
   const number = await saveAccount(id, account_number);
@@ -54,13 +53,12 @@ fetchUserById = async (id) => {
 fetchUserByAccountNumber = async (number) => {
   const [user] = await db('users')
     .join('accounts', 'users.id', 'accounts.user_id')
-    .where('accounts.number', number);
-
+    .where('number', number);
+  console.log(user);
   return user;
 };
 
 userDeposit = async (user_id, account_number, amount) => {
-  console.log({ user_id, account_number, amount });
   await db('accounts').where({ user_id: user_id }).increment('balance', amount);
 
   await logTransaction(account_number, amount);
@@ -109,4 +107,5 @@ module.exports = {
   userDeposit,
   userWithdraw,
   userTransfer,
+  fetchUserByAccountNumber,
 };

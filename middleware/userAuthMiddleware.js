@@ -23,7 +23,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   const decoded = await promisify(jwt.verify)(token, JWT_SECRET);
   const currentUser = await fetchUserById(decoded.id);
-  console.log({ decoded, currentUser });
   if (!currentUser) {
     return next(
       new AppError('The user belonging to this  token no longer exist', 401)

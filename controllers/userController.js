@@ -10,6 +10,7 @@ const {
   userDeposit,
   userWithdraw,
   userTransfer,
+  fetchUserByAccountNumber,
 } = require('../service/userService');
 // const { config } = require('dotenv');
 
@@ -88,7 +89,7 @@ exports.withdraw = catchAsync(async (req, res, next) => {
 exports.transfer = catchAsync(async (req, res, next) => {
   const { recipient: recipient_account_number, amount } = req.body;
   const { id, number, balance } = req.user;
-
+  // console.log(req.user);
   if (!number || !amount) {
     return next(
       new AppError('Enter beneficiary account number and amount', 400)
@@ -104,7 +105,7 @@ exports.transfer = catchAsync(async (req, res, next) => {
   }
 
   const recipient = await fetchUserByAccountNumber(recipient_account_number);
-
+  console.log(recipient);
   if (!recipient) {
     return next(new AppError('Recipient does not exist', 404));
   }

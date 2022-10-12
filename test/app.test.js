@@ -1,32 +1,43 @@
-// const jest  =  require('jest');
-const request  = require('supertest')
-const makeApp = require('../app');
-
-
-const createUser = jest.fn();
-const app = makeApp({ createUser });
+const { config } = require('dotenv');
+const request = require('supertest')
+const app = require('../app');
+const db = require('../knex/knex');
 
 describe('POST /users', () => {
+  const apiPrefix = '/api/v1';
+
   beforeEach(() => {
-    createUser.mockReset();
+    config();
   });
 
-  describe('when passed a username and password', () => {
-    test('should save the username and password in the database', async () => {
-      const body = {
-        email: 'user3@gmail.com',
+  afterEach(async () => {
+    // clear the DB
+    await db('users').del();
+  });
+
+  describe('when passed a email and password', () => {
+    it('should save the email and password in the database', async () => {
+      const payload = {
+        email: 'user111@gmail.com',
         first_name: 'victor',
         last_name: 'ude',
         password: 'ubo456victor',
         password_confirm: 'ubo456victor',
       };
-      const response = await request(app).post('/users').send(body);
+      const { statusCode, body } = await request(app).post(`${apiPrefix}/user`).send(payload);
 
-      expect(createUser.mock.calls[0][0]).toBe(body.email);
-      expect(createUser.mock.calls[0][1]).toBe(body.first_name);
-      expect(createUser.mock.calls[0][2]).toBe(body.last_name);
-      expect(createUser.mock.calls[0][3]).toBe(body.password);
-      expect(createUser.mock.calls[0][4]).toBe(body.password_confirm);
+      // fetch the user from database
+      const [user] = await db('users').where('email', payload.email);
+      // compare with the payload sent
+
+      expect(statusCode).toBe(201);
+      expect(body.status).toStrictEqual('success');
+      expect(body.token).toBeDefined();
+      expect(body.data).toBeDefined();
+      expect(user.email).toStrictEqual(payload.email);
+      expect(user.id).toStrictEqual(body.data.user.id);
     });
   });
 });
+
+
