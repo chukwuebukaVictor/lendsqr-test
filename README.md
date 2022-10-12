@@ -28,7 +28,6 @@ To get a local copy up and running follow these simple example steps.
 -Use copy of sample.env file to create .env file to connect to database
 -Run npx knex migrate:up to setup migration files
 - Finally, run "npm start" to open the app in your Web Browser.
-
 ## Authors
 👤 **Chukwuebuka Victor Ozoede**
 

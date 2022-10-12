@@ -54,7 +54,6 @@ fetchUserByAccountNumber = async (number) => {
   const [user] = await db('users')
     .join('accounts', 'users.id', 'accounts.user_id')
     .where('number', number);
-  console.log(user);
   return user;
 };
 
@@ -73,6 +72,7 @@ userWithdraw = async (user_id, account_number, amount) => {
 };
 
 userTransfer = async (sender_id, recipient_id, amount) => {
+    console.log({sender_id, recipient_id})
   const trx = await db.transaction();
 
   try {
