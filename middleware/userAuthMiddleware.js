@@ -2,7 +2,6 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
-const db = require('../knex/knex');
 const { JWT_SECRET } = require('../config');
 const { fetchUserById } = require('../service/userService');
 
