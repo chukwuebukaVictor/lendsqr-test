@@ -6,7 +6,6 @@ const { randomUUID } = require('crypto');
  */
 exports.up = async function (knex) {
   await knex.schema.createTable('users', (table) => {
-    // table.uuid('id').primary().defaultTo(knex.raw('(UUID())'));
     table.uuid("id").primary();
     table.string('first_name').notNullable();
     table.string('last_name').notNullable();
