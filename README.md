@@ -40,7 +40,7 @@ Contributions, issues, and feature requests are welcome!
 Feel free to check the [issues page](https://github.com/chukwuebukaVictor/Leader-board/issues).
 
 
-[Documentation Page](https://github.com/chukwuebukaVictor/Leader-board/issues)
+[Documentation Page](https://documenter.getpostman.com/view/19842753/2s83zmN2wm)
 
 
 ## Show your support
