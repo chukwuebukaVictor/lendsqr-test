@@ -22,7 +22,7 @@ const saveAccount = async (user_id, number) => {
   return number;
 };
 
-createAccount = async (email, first_name, last_name, hashedPassword) => {
+const createAccount = async (email, first_name, last_name, hashedPassword) => {
   const account_number = Number(Date.now().toString().slice(3));
 
   const id = await saveUser(email, first_name, last_name, hashedPassword);
@@ -34,7 +34,7 @@ createAccount = async (email, first_name, last_name, hashedPassword) => {
   };
 };
 
-fetchUserByEmail = async (email) => {
+const fetchUserByEmail = async (email) => {
   const [user] = await db('users')
     .join('accounts', 'users.id', 'accounts.user_id')
     .where('users.email', email);
@@ -42,7 +42,7 @@ fetchUserByEmail = async (email) => {
   return user;
 };
 
-fetchUserById = async (id) => {
+const fetchUserById = async (id) => {
   const [user] = await db('users')
     .join('accounts', 'users.id', 'accounts.user_id')
     .where('users.id', id);
@@ -50,20 +50,20 @@ fetchUserById = async (id) => {
   return user;
 };
 
-fetchUserByAccountNumber = async (number) => {
+const fetchUserByAccountNumber = async (number) => {
   const [user] = await db('users')
     .join('accounts', 'users.id', 'accounts.user_id')
     .where('number', number);
   return user;
 };
 
-userDeposit = async (user_id, account_number, amount) => {
+const userDeposit = async (user_id, account_number, amount) => {
   await db('accounts').where({ user_id: user_id }).increment('balance', amount);
 
   await logTransaction(account_number, amount);
 };
 
-userWithdraw = async (user_id, account_number, amount) => {
+const userWithdraw = async (user_id, account_number, amount) => {
   await db('accounts')
     .where({ user_id: user_id })
     .increment('balance', -amount);
@@ -71,8 +71,7 @@ userWithdraw = async (user_id, account_number, amount) => {
   await logTransaction(account_number, amount);
 };
 
-userTransfer = async (sender_id, recipient_id, amount) => {
-    console.log({sender_id, recipient_id})
+const userTransfer = async (sender_id, recipient_id, amount) => {
   const trx = await db.transaction();
 
   try {
@@ -89,7 +88,7 @@ userTransfer = async (sender_id, recipient_id, amount) => {
   }
 };
 
-logTransaction = async (recipient, amount, sender = 0) => {
+const logTransaction = async (recipient, amount, sender = 0) => {
   return await db('transactions')
     .insert({
       id: randomUUID(),
