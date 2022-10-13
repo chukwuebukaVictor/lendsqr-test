@@ -39,6 +39,10 @@ Contributions, issues, and feature requests are welcome!
 
 Feel free to check the [issues page](https://github.com/chukwuebukaVictor/Leader-board/issues).
 
+
+[Documentation Page](https://github.com/chukwuebukaVictor/Leader-board/issues)
+
+
 ## Show your support
 
 Give a ⭐️ if you like this project!
